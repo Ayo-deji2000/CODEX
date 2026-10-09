@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),test=require('node:test'),vm=require('node:vm'),fs=require('node:fs'),L=require('../shared/layout-engine');
+const code=fs.readFileSync(require('node:path').join(__dirname,'../illustrator/SmartArtboardResizer_Illustrator.jsx'),'utf8').replace(/^#.*$/gm,'');
+function run(options={}){
+ const alerts=[],p=L.presets(72)[0],doc={typename:'Document',selection:[]},createdLayers=[],sources=[],boards=[];let active=0;
+ function board(r){return {artboardRect:r,name:'Original',remove(){boards.splice(boards.indexOf(this),1);}};}
+ boards.push(board([0,p.h,p.w,0]));boards.getActiveArtboardIndex=()=>active;boards.setActiveArtboardIndex=n=>{active=n;};boards.add=r=>{const b=board(r);boards.push(b);return b;};doc.artboards=boards;
+ doc.layers={add(){const layer={typename:'Layer',visible:true,locked:false,children:[],name:'',remove(){createdLayers.splice(createdLayers.indexOf(this),1);}};createdLayers.push(layer);return layer;}};
+ const sourceLayer={typename:'Layer',parent:doc,visible:true,locked:false};
+ for(let i=0;i<3;i++){
+ const item={typename:'PathItem',parent:sourceLayer,name:'Element '+i,locked:false,hidden:false,visibleBounds:[25,p.h-30-i*170,p.w-25,p.h-110-i*170],duplicate(layer){if(options.fail&&i===1)throw Error('Injected duplication failure');const copy={...this,visibleBounds:this.visibleBounds.slice(),parent:layer,resize(sx,sy){const b=this.visibleBounds;b[2]=b[0]+(b[2]-b[0])*sx/100;b[3]=b[1]-(b[1]-b[3])*sy/100;},translate(dx,dy){const b=this.visibleBounds;b[0]+=dx;b[2]+=dx;b[1]+=dy;b[3]+=dy;}};layer.children.unshift(copy);return copy;}};sources.push(item);
+ }
+ if(options.cross)sources[0].visibleBounds[0]=-10;if(options.lock)sources[0].locked=true;doc.pageItems=sources;
+ function control(type,text){const c={type,text:text||'',children:[],add(t,_arg,txt){const v=control(t,txt);this.children.push(v);if(t==='dropdownlist'){let selected={index:0};Object.defineProperty(v,'selection',{get(){return selected;},set(value){selected=typeof value==='number'?{index:value}:value;}});}return v;},close(){}};return c;}
+ function Window(_type,title){const w=control('window');w.show=function(){if(title==='Smart Artboard Resizer'){const actions=this.children.find(c=>c.type==='group'&&c.children.some(v=>v.text==='Apply Conversion'));actions.children.find(c=>c.text===(options.preview?'Preview Conversion':'Apply Conversion')).onClick();return 1;}return options.discard?0:1;};return w;}
+ const app={documents:[doc],activeDocument:doc,coordinateSystem:'old',redraw(){}};const ctx={app,Window,SARLayout:L,alert:m=>alerts.push(m),confirm:()=>true,CoordinateSystem:{DOCUMENTCOORDINATESYSTEM:'document'},ElementPlacement:{PLACEATBEGINNING:0},Transformation:{TOPLEFT:0},isFinite,Number,Error};const before=JSON.stringify(sources.map(s=>({bounds:s.visibleBounds,locked:s.locked})));vm.runInNewContext(code,ctx);return {doc,sources,createdLayers,boards,alerts,app,before,after:JSON.stringify(sources.map(s=>({bounds:s.visibleBounds,locked:s.locked})))};
+}
+test('Illustrator wrapper duplicates without touching originals or stack order',()=>{const x=run();assert.equal(x.before,x.after);assert.equal(x.boards.length,2);assert.equal(x.createdLayers.length,1);assert.deepEqual(x.createdLayers[0].children.map(c=>c.name),['Element 0','Element 1','Element 2']);const r=x.boards[1].artboardRect;assert(Math.abs(r[2]-r[0]-259.2)<1e-9);assert.equal(r[1]-r[3],324);assert.equal(x.app.coordinateSystem,'old');});
+test('Illustrator duplication failure rolls back layers and artboard',()=>{const x=run({fail:true});assert.equal(x.before,x.after);assert.equal(x.boards.length,1);assert.equal(x.createdLayers.length,0);assert(x.alerts.some(a=>a.includes('Injected')));});
+test('Illustrator ambiguous cross-artboard content blocks before mutation',()=>{const x=run({cross:true});assert.equal(x.before,x.after);assert.equal(x.boards.length,1);assert(x.alerts.some(a=>a.includes('crosses')));});
+test('Illustrator locked source is untouched and excluded',()=>{const x=run({lock:true});assert.equal(x.before,x.after);assert.equal(x.createdLayers[0].children.length,2);});
+test('Illustrator discarded preview removes generated artifacts only',()=>{const x=run({preview:true,discard:true});assert.equal(x.before,x.after);assert.equal(x.boards.length,1);assert.equal(x.createdLayers.length,0);});

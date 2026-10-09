@@ -1,0 +1,46 @@
+# Designer's guide
+
+## Conversion
+
+**Automatic direction** recognizes preset portrait dimensions using a tolerance of approximately 0.02 inches (and at least one unit). A5 becomes custom; custom becomes A5. Landscape orientation is not treated as either preset. For an unknown source, automatic mode stops. Explicit directions choose the target and report the non-preset source.
+
+Illustrator uses 72 points per inch. Photoshop uses the source document resolution and rounds target dimensions to whole pixels. At 300 ppi the custom output is 1080 × 1350 px; A5 is approximately 1748 × 2480 px. Rounding changes physical size slightly. Document ruler units, resolution and color profile are not set by the tool.
+
+## Modes
+
+**Smart Reflow** keeps overlap-connected artwork together, identifies horizontal sections and preserves the columns within each section. It gives the target 5% margins, fits the sections proportionally and distributes remaining vertical space between them. This changes section positions according to the new format rather than merely scaling all original coordinates. Groups are atomic. When fewer than two sections can be confidently identified, it reports a fallback to Safe Fit.
+
+In Illustrator, standalone unthreaded area text with a simple rectangular, unrotated frame can have its frame widened when it occupies its own vertical band. Glyphs are scaled uniformly, and widening the underlying text path changes line breaks without stretching letters. Fonts and overset still need manual review. Grouped, rotated, curved, threaded and multi-column text do not use this frame-widening step. Photoshop text stays editable and scales uniformly; paragraph widths are retained.
+
+**Safe Fit** centers the foreground composition within the safe area using one scale. Full-frame background candidates use proportional cover in both modes; review crop and bleed. A logo drawn across an entire page can be misclassified as a background. Group such content to avoid this simple background heuristic.
+
+## Illustrator workflow
+
+1. Activate the intended source with the Artboard tool.
+2. For ambiguous or bleeding artwork, select complete intended objects using the Selection tool, then choose **Selected artwork on active artboard**. Selecting any part of a group promotes selection to the entire group.
+3. Run the JSX, choose direction, mode and artboard gap in millimetres.
+4. **Analyze Design** reports eligible objects, section decisions and warnings. All Artboards snapshots the existing artboard list, so newly created outputs are not recursively converted.
+5. **Preview Conversion** creates real editable duplicate artwork on new artboards. A review dialog lets you keep or discard all generated items. The modal review allows visual comparison with the visible artwork; it is not an interactive canvas editor. To zoom/edit, keep the conversion and inspect it in Illustrator.
+6. **Apply Conversion** creates the same copies and leaves them for review.
+
+The original artboards and items are never intentionally moved or resized. Generated layers are named `SAR - Converted - …`. Originals remain in their existing layers. New layers consolidate duplicated roots, so original top-level layer hierarchy and layer-level compositing are not reproduced exactly. Check stacking, blending and appearance.
+
+Locked/hidden content, including groups containing such children, is excluded and reported. A background crossing artboard bounds triggers the ownership check; select it explicitly if you intend to include it. Threaded text, missing linked images and unsupported live/plugin objects stop the operation with instructions.
+
+## Photoshop workflow
+
+For ordinary PSD/PSB-style canvases, choose **Active canvas**. Root groups remain intact. Ungrouped clipping chains or linked layers are blocked; group all related elements in a separate working copy. Locked, hidden and Background layers stay unchanged in the duplicated canvas and are reported. They may be cropped or misplaced at the target dimensions. Convert a Background layer into an ordinary unlocked layer in your own working copy if it should be repositioned.
+
+For artboards, select a layer inside the intended top-level artboard, and choose **Selected artboard → separate document**. Analysis validates the artboard rectangle from a read-only descriptor. Conversion duplicates the entire document, extracts the copied selected artboard's children, removes other copied roots and the now-empty copied container, crops to the source artboard rectangle, then lays out the ordinary canvas. The original document stays untouched. Missing or unrecognized descriptor geometry stops safely. Locked/hidden content within the selected artboard stops extraction; prepare an unlocked working copy. Empty selected artboards are blocked.
+
+Artboard background settings are not ordinary content layers. Add an explicit background layer if the design relies on the artboard's background color. Layer-level effects inside preserved groups remain; artboard-container effects, metadata and blending are not carried to the extracted canvas.
+
+**Preview Conversion** opens a separate converted document. You can navigate and edit it. **Apply Conversion** keeps the existing preview; it does not re-run the operation. **Cancel / Discard Preview** closes that preview without saving, including any changes made to it. Configuration is disabled while a preview is pending. If you close a preview yourself, the next action clears its tracking. Plugin reload/closing the panel can lose preview tracking; close the generated document manually if you no longer want it.
+
+Without a pending preview, **Apply Conversion** creates a new duplicate and keeps it. To convert multiple Photoshop artboards, repeat selected-artboard conversion for each; batch and multiple selection are not provided. There are no nonfunctional same-document placement or gap controls in the Photoshop panel.
+
+## Review every output
+
+Check target dimensions, readable font sizes, paragraph overset, image crops, layer effects, group integrity, safe margins, stacking and unexpected collisions. Intentional source overlaps are preserved rather than flagged as new collisions. Collision detection uses rectangles, not exact painted outlines. Background bleed is expected and reported.
+
+Reverse conversion creates a further new version. Existing versions remain available; automatic reversal does not restore the exact original positions.

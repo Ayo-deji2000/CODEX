@@ -1,0 +1,9 @@
+{
+  "manifestVersion": 5,
+  "id": "com.smartartboardresizer.local",
+  "name": "Smart Artboard Resizer",
+  "version": "0.1.0",
+  "main": "index.html",
+  "host": {"app": "PS", "minVersion": "24.2.0", "data": {"apiVersion": 2}},
+  "entrypoints": [{"type": "panel", "id": "resizer", "label": {"default": "Smart Artboard Resizer"}, "minimumSize": {"width": 310, "height": 460}, "preferredDockedSize": {"width": 350, "height": 580}, "preferredFloatingSize": {"width": 400, "height": 620}}]
+}

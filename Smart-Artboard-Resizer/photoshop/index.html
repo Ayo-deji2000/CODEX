@@ -1,0 +1,9 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body {padding:16px;color:#ddd;background:#292929;font-size:13px;} h2{font-size:18px;} select,button{width:100%;margin:5px 0;padding:7px;} label{display:block;margin-top:12px;} #report{white-space:pre-wrap;overflow:auto;height:180px;background:#202020;padding:10px;} p{line-height:1.4;}
+</style></head><body><h2>Smart Artboard Resizer</h2><p>Convert the active canvas into an editable duplicate document. The source stays untouched.</p>
+<label>Conversion direction<select id="direction"><option value="0">Automatic direction</option><option value="1">A5 → 3.6 × 4.5 in</option><option value="2">3.6 × 4.5 in → A5</option></select></label>
+<label>Source<select id="scope"><option value="canvas">Active canvas</option><option value="artboard">Selected artboard → separate document</option></select></label>
+<label>Layout mode<select id="mode"><option value="smart">Smart Reflow</option><option value="safe">Safe Fit</option></select></label>
+<p>Groups stay intact. Locked and hidden layers stay unchanged in the copy and require review. Select a layer inside the intended artboard to extract its editable contents to a duplicate document.</p>
+<button id="analyze">Analyze Design</button><button id="preview">Preview Conversion</button><button id="apply">Apply Conversion</button><button id="cancel">Cancel / Discard Preview</button>
+<div id="report">Open a layered A5 or custom-size canvas, then analyze.</div><script src="main.js"></script></body></html>
