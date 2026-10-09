@@ -4,7 +4,7 @@
 
 The previous script queried `nextFrame` and `previousFrame` on every text object. Illustrator can reject those properties for point text. Version 0.1.1 never reads either property: point text bypasses threading checks, while area/path stories are rejected if their frame count is greater than one. Text content remains editable; there is no need to outline text to work around this error.
 
-Download and extract the complete updated project folder. Replace BOTH the old JSX and shared engine by using the new folder. In Illustrator choose File > Scripts > Other Script and open the new `illustrator/SmartArtboardResizer_Illustrator.jsx`. Analyze should show `v0.1.1` in its report.
+Download and extract the complete updated project folder. Replace BOTH the old JSX and shared engine by using the new folder. In Illustrator choose File > Scripts > Other Script and open the new `illustrator/SmartArtboardResizer_Illustrator.jsx`. Analyze should show `v0.1.2` in its report.
 
 If optional area-text geometry is unavailable, conversion retains proportional frame scaling instead of aborting during shape inspection. If Illustrator rejects a frame-width mutation, the conversion rolls back and suggests Safe Fit.
 
@@ -22,3 +22,11 @@ In 0.1.1:
 The script does not automatically dismantle whole-page groups or crop the entire foreground poster. A corrected layout for a densely overlapping design needs the actual grouping/geometry, not only a screenshot.
 
 If an issue remains, provide the Illustrator/macOS versions, the Analyze report, and an anonymized editable `.ai` file where possible. The screenshots establish the symptom but cannot establish source object ownership, lock state, text type or paragraph overflow.
+
+## “Unsupported PluginItem” — corrected in 0.1.2
+
+The earlier whitelist rejected top-level PluginItem objects even though the Illustrator scripting reference documents their duplication and transformation methods. Version 0.1.2 treats them as atomic native artwork. Nested PluginItems are also reported while their parent groups remain intact. Plugin-managed objects are never automatically expanded, outlined, rasterized, released or converted from tracing.
+
+Use the complete 0.1.2 folder, then Analyze/Preview again. Analyze should show `v0.1.2` and a plugin-managed-artwork warning instead of the blanket rejection. Check the copied object's appearance and availability in the originating plugin. The script cannot promise editability for missing plugins or inspect hidden plugin-managed text/images. PluginItems are not classified as full-page backgrounds, because covering/cropping their opaque internals could lose important content.
+
+If a native operation fails, an object-specific message states which step failed and generated copies are removed. Provide that message and the originating plugin/object type if known. Keep the original live object intact; do not expand or rasterize it merely to get past this message. The corrected workflow still needs testing on the user's actual Illustrator 2026 object.

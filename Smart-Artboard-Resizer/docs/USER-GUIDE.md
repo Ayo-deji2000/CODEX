@@ -25,7 +25,7 @@ In Illustrator, standalone unthreaded area text with a simple rectangular, unrot
 
 The original artboards and items are never intentionally moved or resized. Generated layers are named `SAR - Converted - …`. Originals remain in their existing layers. New layers consolidate duplicated roots, so original top-level layer hierarchy and layer-level compositing are not reproduced exactly. Check stacking, blending and appearance.
 
-Locked/hidden content, including groups containing such children, is excluded and reported. A background crossing artboard bounds triggers the ownership check; select it explicitly if you intend to include it. Threaded text, missing linked images and unsupported live/plugin objects stop the operation with instructions.
+Locked/hidden content, including groups containing such children, is excluded and reported. A background crossing artboard bounds triggers the ownership check; select it explicitly if you intend to include it. Threaded text, missing linked images and unrecognized object types stop the operation with instructions. PluginItem objects are duplicated and transformed as intact native objects; their internals are not reflowed. Analyze warns you to review live appearance and plugin editability. If the originating plugin rejects an operation, conversion rolls back and identifies the item.
 
 ## Photoshop workflow
 

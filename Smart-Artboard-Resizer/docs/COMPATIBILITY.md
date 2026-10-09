@@ -44,3 +44,9 @@ No assumption is made that Illustrator and Photoshop share artboard APIs. Photos
 Point text is not threaded and must not be queried through terminal-frame getters. Area/path text is checked using `TextFrameItem.story.textFrames.length`, avoiding unavailable point-text properties and inconsistent terminal-frame values. Optional rectangular text-path inspection disables widening when a getter is unavailable; it does not convert or outline text.
 
 [Adobe Community report of the same nextFrame exception for point text](https://community.adobe.com/questions-652/textframeitem-nextframe-throws-799911) documents the host failure seen in the screenshot. The story/frame relationship is part of the Adobe scripting reference cited above.
+
+## Native PluginItem handling in 0.1.2
+
+The Adobe Illustrator JavaScript reference (PluginItem section) documents existing-item duplication, resize and translation. The adapter uses only these native operations and keeps the item atomic. It does not create PluginItem objects directly or call expand, rasterize, trace, release or plugin-message APIs. Specific plugin implementations may still reject the operation; errors roll back generated artwork.
+
+[PluginItem scripting reference rendering](https://ai-scripting.docsforadobe.dev/jsobjref/PluginItem/) and the Adobe-hosted scripting reference PDF cited above document these methods. Native editability and live appearance remain host/plugin validation items.

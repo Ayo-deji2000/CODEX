@@ -1,4 +1,4 @@
-# Smart Artboard Resizer — 0.1.1
+# Smart Artboard Resizer — 0.1.2
 
 Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 
@@ -10,6 +10,10 @@ Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 - **Safe Fit:** uniform proportional fitting of foreground artwork. Likely full-frame backgrounds use proportional cover and may extend beyond the destination.
 
 No paid dependencies, remote service, telemetry, publication, or automatic saving.
+
+## Fixes in 0.1.2
+
+- Allows Illustrator PluginItem objects through documented native duplication and proportional transformation, retaining their representation as atomic artwork. No expansion, rasterization or tracing conversion is performed. Plugin-specific native-operation failures roll back all generated items with an object-specific message.
 
 ## Fixes in 0.1.1
 
