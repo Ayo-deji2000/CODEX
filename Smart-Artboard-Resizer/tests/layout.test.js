@@ -15,3 +15,6 @@ test('random geometric invariants in both modes',()=>{let seed=42;function rand(
 
 test('isolated area text widens its frame without changing glyph scale',()=>{const it=[{x:30,y:20,w:300,h:50},{x:30,y:200,w:150,h:100,areaText:true}];const p=L.plan(it,src,b,'smart');assert.equal(p.items[1].reflowWidth,b.w-2*p.margin);assert.equal(p.items[0].scale,p.items[1].scale);assert(p.warnings.some(w=>w.includes('overset')));contained(p,b);});
 test('area text in a multi-column band is not widened',()=>{const it=[{x:20,y:20,w:120,h:50,areaText:true},{x:230,y:20,w:120,h:50},{x:20,y:200,w:300,h:200}];const p=L.plan(it,src,b,'smart');assert.equal(p.items[0].reflowWidth,undefined);});
+
+test('zero margin removes artificial inset without distorting page-sized grouped artwork',()=>{const it=[{x:0,y:0,w:a.w,h:a.h}],p=L.plan(it,src,b,'smart',{marginRatio:0}),old=L.plan(it,src,b,'smart');assert.equal(p.mode,'safe');assert.equal(p.margin,0);assert.equal(p.items[0].y,0);assert(p.items[0].scale>old.items[0].scale);assert(Math.abs(p.items[0].w/p.items[0].h-a.w/a.h)<1e-9);assert(p.items[0].x>0);assert(p.warnings.some(w=>w.includes('bands')));assert.deepEqual(it,[{x:0,y:0,w:a.w,h:a.h}]);});
+test('invalid margin is rejected without changing source input',()=>{for(const ratio of [-.01,.21,NaN])assert.throws(()=>L.plan(items,src,b,'safe',{marginRatio:ratio}),/Safe margin/);});

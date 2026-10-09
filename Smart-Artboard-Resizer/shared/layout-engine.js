@@ -8,9 +8,11 @@ var SARLayout = (function () {
     function detect(w,h,unit) { var p=presets(unit),i,t=Math.max(unit*0.02,1); for(i=0;i<2;i++) if(Math.abs(w-p[i].w)<=t && Math.abs(h-p[i].h)<=t) return i; return -1; }
     function target(w,h,unit,direction) { var d=detect(w,h,unit); if(direction===0 && d<0) throw Error('Source size is not a recognized preset. Choose an explicit direction.'); return presets(unit)[direction===0?1-d:direction===1?1:0]; }
     function rightOf(source,existing,w,h,gap) { var x=source.x+source.w+gap,y=source.y,i,again=true,loops=0; if(!finite(gap)||gap<0)throw Error('Gap must be a non-negative number.'); while(again){again=false; if(++loops>existing.length+2)throw Error('Cannot find a free artboard position.'); for(i=0;i<existing.length;i++){ if(overlap({x:x-gap,y:y-gap,w:w+gap*2,h:h+gap*2},existing[i])){x=existing[i].x+existing[i].w+gap;again=true;} }} return {x:x,y:y,w:w,h:h}; }
-    function plan(items,source,target,mode) {
+    function plan(items,source,target,mode,options) {
         if(!box(source)||!box(target))throw Error('Invalid source or destination geometry.');
-        var i,j,k,n=items.length,margin=Math.min(target.w,target.h)*0.05,sw=target.w-margin*2,sh=target.h-margin*2;
+        var ratio=options&&options.marginRatio!==undefined?options.marginRatio:0.05;
+        if(!finite(ratio)||ratio<0||ratio>0.2)throw Error('Safe margin must be between 0 and 20 percent.');
+        var i,j,k,n=items.length,margin=Math.min(target.w,target.h)*ratio,sw=target.w-margin*2,sh=target.h-margin*2;
         var out=[],warnings=[],groups=[],seen=[],bg=[],fg=[],all=null;
         for(i=0;i<n;i++){if(!box(items[i]))throw Error('Invalid bounds for element '+i);if(items[i].background)bg.push(i);else {fg.push(i);all=all?union(all,items[i]):items[i];}}
         var s=all?Math.min(sw/all.w,sh/all.h):1;
@@ -20,7 +22,7 @@ var SARLayout = (function () {
             groups.sort(function(a,b){return a.b.y-b.b.y || a.b.x-b.b.x;});
             var rows=[];
             for(i=0;i<groups.length;i++){var g=groups[i],row=rows.length?rows[rows.length-1]:null;if(row && Math.min(row.b.y+row.b.h,g.b.y+g.b.h)>Math.max(row.b.y,g.b.y)+Math.min(row.b.h,g.b.h)*0.25){row.groups.push(g);row.b=union(row.b,g.b);}else rows.push({groups:[g],b:g.b});}
-            if(rows.length<2){warnings.push('Composition has fewer than two independent sections; Safe Fit used.');mode='safe';}
+            if(rows.length<2){warnings.push('Smart Reflow could not separate the foreground into independent sections; Safe Fit used. A single group, flattened image, or connected object overlaps can cause this. Keep related section groups intact but separate the background from foreground in a working copy.');mode='safe';}
             else {
                 var total=0,maxW=0,gap=Math.min(target.w,target.h)*0.025;
                 for(i=0;i<rows.length;i++){total+=rows[i].b.h;maxW=Math.max(maxW,rows[i].b.w);}
@@ -34,6 +36,7 @@ var SARLayout = (function () {
                 }
             }
         }
+        if(mode!=='smart'&&all&&all.w>=source.w*.9&&all.h>=source.h*.9&&!bg.length)warnings.push('Page-spanning artwork is fitted as foreground. Safe margins add an inset; set the margin to 0% to remove that inset. Different source/target proportions can still leave side or top/bottom bands. The tool will not stretch or crop the entire composition to remove them.');
         if(mode!=='smart')for(i=0;i<fg.length;i++){k=fg[i];var a=items[k];out[k]={x:margin+(sw-all.w*s)/2+(a.x-all.x)*s,y:margin+(sh-all.h*s)/2+(a.y-all.y)*s,w:a.w*s,h:a.h*s,scale:s};}
         for(i=0;i<bg.length;i++){k=bg[i];var c=items[k],bs=Math.max(target.w/c.w,target.h/c.h);out[k]={x:(target.w-c.w*bs)/2,y:(target.h-c.h*bs)/2,w:c.w*bs,h:c.h*bs,scale:bs};warnings.push('Background '+k+' uses proportional cover; crop/bleed requires review.');}
         // Only widen isolated, simple paragraph boxes. Font glyphs keep uniform scale.

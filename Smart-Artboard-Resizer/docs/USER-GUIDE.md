@@ -8,7 +8,7 @@ Illustrator uses 72 points per inch. Photoshop uses the source document resoluti
 
 ## Modes
 
-**Smart Reflow** keeps overlap-connected artwork together, identifies horizontal sections and preserves the columns within each section. It gives the target 5% margins, fits the sections proportionally and distributes remaining vertical space between them. This changes section positions according to the new format rather than merely scaling all original coordinates. Groups are atomic. When fewer than two sections can be confidently identified, it reports a fallback to Safe Fit.
+**Smart Reflow** keeps overlap-connected artwork together, identifies horizontal sections and preserves the columns within each section. It gives the target 5% margins by default (Illustrator allows 0–20%), fits the sections proportionally and distributes remaining vertical space between them. This changes section positions according to the new format rather than merely scaling all original coordinates. Groups are atomic. When fewer than two sections can be confidently identified, it reports a fallback to Safe Fit.
 
 In Illustrator, standalone unthreaded area text with a simple rectangular, unrotated frame can have its frame widened when it occupies its own vertical band. Glyphs are scaled uniformly, and widening the underlying text path changes line breaks without stretching letters. Fonts and overset still need manual review. Grouped, rotated, curved, threaded and multi-column text do not use this frame-widening step. Photoshop text stays editable and scales uniformly; paragraph widths are retained.
 
@@ -18,7 +18,7 @@ In Illustrator, standalone unthreaded area text with a simple rectangular, unrot
 
 1. Activate the intended source with the Artboard tool.
 2. For ambiguous or bleeding artwork, select complete intended objects using the Selection tool, then choose **Selected artwork on active artboard**. Selecting any part of a group promotes selection to the entire group.
-3. Run the JSX, choose direction, mode and artboard gap in millimetres.
+3. Run the JSX, choose direction, mode, safe margin percentage (default 5%; 0–20% allowed), and artboard gap in millimetres.
 4. **Analyze Design** reports eligible objects, section decisions and warnings. All Artboards snapshots the existing artboard list, so newly created outputs are not recursively converted.
 5. **Preview Conversion** creates real editable duplicate artwork on new artboards. A review dialog lets you keep or discard all generated items. The modal review allows visual comparison with the visible artwork; it is not an interactive canvas editor. To zoom/edit, keep the conversion and inspect it in Illustrator.
 6. **Apply Conversion** creates the same copies and leaves them for review.

@@ -1,4 +1,4 @@
-# Smart Artboard Resizer — 0.1.0
+# Smart Artboard Resizer — 0.1.1
 
 Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 
@@ -10,6 +10,13 @@ Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 - **Safe Fit:** uniform proportional fitting of foreground artwork. Likely full-frame backgrounds use proportional cover and may extend beyond the destination.
 
 No paid dependencies, remote service, telemetry, publication, or automatic saving.
+
+## Fixes in 0.1.1
+
+- Avoids reading unavailable point-text threading properties. Area/path stories are checked via their frame count; threaded stories remain blocked.
+- Makes optional paragraph-shape inspection nonfatal.
+- Adds an Illustrator safe-margin setting (0–20%) and explicit warnings for whole-page grouped compositions and Safe Fit fallback. Zero margin removes the configured inset; aspect-ratio bands can still remain.
+- Includes regression tests reproducing throwing text-frame getters. Read [troubleshooting](docs/TROUBLESHOOTING.md) for the reported screenshot symptoms.
 
 ## Start
 

@@ -38,3 +38,9 @@ Sources:
 - [Adobe Community: artboard rectangle descriptor discussion](https://community.adobe.com/questions-712/how-to-get-artboard-properties-in-photoshop-cc-2015-1101343)
 
 No assumption is made that Illustrator and Photoshop share artboard APIs. Photoshop outputs ordinary duplicate documents. The tools do not set document units, raster resolution or color profiles.
+
+## Text-frame correction in 0.1.1
+
+Point text is not threaded and must not be queried through terminal-frame getters. Area/path text is checked using `TextFrameItem.story.textFrames.length`, avoiding unavailable point-text properties and inconsistent terminal-frame values. Optional rectangular text-path inspection disables widening when a getter is unavailable; it does not convert or outline text.
+
+[Adobe Community report of the same nextFrame exception for point text](https://community.adobe.com/questions-652/textframeitem-nextframe-throws-799911) documents the host failure seen in the screenshot. The story/frame relationship is part of the Adobe scripting reference cited above.
