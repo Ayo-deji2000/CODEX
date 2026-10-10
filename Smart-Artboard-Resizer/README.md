@@ -1,4 +1,4 @@
-# Smart Artboard Resizer — 0.1.2
+# Smart Artboard Resizer — 0.1.3
 
 Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 
@@ -11,7 +11,7 @@ Convert A5 portrait (148 × 210 mm) ↔ 3.6 × 4.5 inches using editable copies.
 
 No paid dependencies, remote service, telemetry, publication, or automatic saving.
 
-## Fixes in 0.1.2
+## Fixes in 0.1.3
 
 - Allows Illustrator PluginItem objects through documented native duplication and proportional transformation, retaining their representation as atomic artwork. No expansion, rasterization or tracing conversion is performed. Plugin-specific native-operation failures roll back all generated items with an object-specific message.
 
@@ -58,3 +58,7 @@ No dependency installation is required. Tests cover pure geometry, mock Illustra
 ## Completion boundary
 
 Host visual QA and acceptance remain outstanding. Smart Reflow infers geometric relationships, not design meaning. Reverse conversion creates a new composition and does not guarantee reproduction of the original arrangement. The Photoshop output is a separate canvas document, not another artboard in the same document.
+
+### Illustrator 0.1.3 update
+
+Smart Reflow now has an enabled-by-default edge-to-edge section-background option. Supported background copies use editable proportional-cover clipping groups while foreground margins remain independent. Foreground within a detected section preserves relative positions. See the [user guide](docs/USER-GUIDE.md#edge-to-edge-illustrator-sections-013) for detection and explicit background naming. Verified by 45 automated tests; native Illustrator 2026 appearance checks remain pending.

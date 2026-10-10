@@ -18,3 +18,40 @@ test('area text in a multi-column band is not widened',()=>{const it=[{x:20,y:20
 
 test('zero margin removes artificial inset without distorting page-sized grouped artwork',()=>{const it=[{x:0,y:0,w:a.w,h:a.h}],p=L.plan(it,src,b,'smart',{marginRatio:0}),old=L.plan(it,src,b,'smart');assert.equal(p.mode,'safe');assert.equal(p.margin,0);assert.equal(p.items[0].y,0);assert(p.items[0].scale>old.items[0].scale);assert(Math.abs(p.items[0].w/p.items[0].h-a.w/a.h)<1e-9);assert(p.items[0].x>0);assert(p.warnings.some(w=>w.includes('bands')));assert.deepEqual(it,[{x:0,y:0,w:a.w,h:a.h}]);});
 test('invalid margin is rejected without changing source input',()=>{for(const ratio of [-.01,.21,NaN])assert.throws(()=>L.plan(items,src,b,'safe',{marginRatio:ratio}),/Safe margin/);});
+
+function sectionPoster(){return [
+ {x:0,y:0,w:420,h:220,sectionBackground:true},
+ {x:0,y:220,w:420,h:250,sectionBackground:true},
+ {x:340,y:15,w:50,h:50}, {x:55,y:90,w:310,h:90},
+ {x:140,y:235,w:140,h:20}, // pricing heading
+ {x:40,y:265,w:340,h:190}, // border outline
+ {x:70,y:290,w:110,h:45}, {x:240,y:290,w:110,h:45},
+ {x:70,y:380,w:110,h:45}, {x:240,y:380,w:110,h:45},
+ {x:60,y:510,w:300,h:55}
+];}
+test('section backgrounds fill target width while foreground keeps safe margins',()=>{
+ const it=sectionPoster(),before=JSON.stringify(it),p=L.plan(it,{x:0,y:0,w:420,h:595},b,'smart');
+ assert.equal(p.mode,'smart');assert.equal(JSON.stringify(it),before);
+ assert.equal(p.items[0].clip.x,0);assert.equal(p.items[0].clip.w,b.w);assert.equal(p.items[0].clip.y,0);
+ assert.equal(p.items[0].clip.y+p.items[0].clip.h,p.items[1].clip.y);
+ for(let i=0;i<2;i++){const o=p.items[i],c=o.clip;assert(o.x<=c.x);assert(o.x+o.w>=c.x+c.w-1e-8);assert(o.y<=c.y+1e-8);assert(o.y+o.h>=c.y+c.h-1e-8);assert(Math.abs(o.w/o.h-it[i].w/it[i].h)<1e-9);}
+ contained({...p,items:p.items.slice(2)},b);
+});
+test('section title, outlined frame and four cards preserve all relative distances',()=>{
+ const it=sectionPoster(),p=L.plan(it,{x:0,y:0,w:420,h:595},b,'smart');
+ for(let i=5;i<=9;i++){assert.equal(p.items[i].scale,p.items[4].scale);assert(Math.abs(p.items[i].x-p.items[4].x-(it[i].x-it[4].x)*p.items[i].scale)<1e-8);assert(Math.abs(p.items[i].y-p.items[4].y-(it[i].y-it[4].y)*p.items[i].scale)<1e-8);}
+ assert(p.items[4].y+p.items[4].h<p.items[5].y);assert.equal(p.items[2].scale,p.items[3].scale);
+});
+test('section cover supports reverse conversion, empty sections and Safe Fit fallback',()=>{
+ const it=sectionPoster();for(const target of [a,b])for(const mode of ['smart','safe']){const p=L.plan(it,{x:0,y:0,w:420,h:595},target,mode);assert(p.items.every(o=>Number.isFinite(o.x+o.y+o.w+o.h)));}
+ const p=L.plan([{x:0,y:0,w:420,h:595,sectionBackground:true}],{x:0,y:0,w:420,h:595},b,'smart');assert.deepEqual(p.items[0].clip,{x:0,y:0,w:b.w,h:b.h});
+});
+test('overlapping section backgrounds fail with an actionable preflight error',()=>{
+ assert.throws(()=>L.plan([{x:0,y:0,w:420,h:300,sectionBackground:true},{x:0,y:250,w:420,h:300,sectionBackground:true}],{x:0,y:0,w:420,h:595},b,'smart'),/Section backgrounds overlap/);
+});
+
+test('empty background section keeps a viewport between populated sections without overlap',()=>{
+ const it=[{x:0,y:0,w:420,h:180,sectionBackground:true},{x:0,y:180,w:420,h:100,sectionBackground:true},{x:0,y:280,w:420,h:315,sectionBackground:true},{x:40,y:30,w:300,h:100},{x:40,y:320,w:300,h:170}];const p=L.plan(it,{x:0,y:0,w:420,h:595},b,'smart');
+ for(let i=0;i<2;i++)assert(Math.abs(p.items[i].clip.y+p.items[i].clip.h-p.items[i+1].clip.y)<1e-9);
+ assert(p.items[1].clip.h>0);assert.equal(p.items[2].clip.y+p.items[2].clip.h,b.h);
+});

@@ -6,7 +6,7 @@
     var doc=app.activeDocument,active=doc.artboards.getActiveArtboardIndex(),selection=[],i;
     if(doc.selection)for(i=0;i<doc.selection.length;i++)selection.push(doc.selection[i]);
     function rect(ab){var r=ab.artboardRect;return {x:r[0],y:-r[1],w:r[2]-r[0],h:r[1]-r[3]};}
-    function bounds(it){var b=it.visibleBounds;if(it.typename==='GroupItem'&&it.clipped){for(var z=0;z<it.pageItems.length;z++){var mask=it.pageItems[z];if(mask.typename==='PathItem'&&mask.clipping){b=mask.geometricBounds;break;}if(mask.typename==='CompoundPathItem'&&mask.pathItems.length&&mask.pathItems[0].clipping){b=mask.geometricBounds;break;}}}return {x:b[0],y:-b[1],w:b[2]-b[0],h:b[1]-b[3]};}
+    function bounds(it){var b=it.visibleBounds;if(it.typename==='GroupItem'&&it.clipped){for(var z=0;z<it.pageItems.length;z++){var mask=it.pageItems[z];if(mask.parent!==it)continue;if(mask.typename==='PathItem'&&mask.clipping){b=mask.geometricBounds;break;}if(mask.typename==='CompoundPathItem'&&mask.pathItems.length&&mask.pathItems[0].clipping){b=mask.geometricBounds;break;}}}return {x:b[0],y:-b[1],w:b[2]-b[0],h:b[1]-b[3]};}
     function blocked(it){var p=it;while(p&&p!==doc){if(p.locked||p.hidden||(p.typename==='Layer'&&!p.visible))return true;p=p.parent;}return false;}
     function nestedBlocked(it){if(blocked(it))return true; if(it.typename==='GroupItem'){for(var z=0;z<it.pageItems.length;z++)if(nestedBlocked(it.pageItems[z]))return true;}return false;}
     function simpleParagraph(it){try{
@@ -16,6 +16,17 @@
         for(z=0;z<4;z++){var a=pts[z].anchor,l=pts[z].leftDirection,r=pts[z].rightDirection;if(Math.abs(a[0]-l[0])+Math.abs(a[1]-l[1])+Math.abs(a[0]-r[0])+Math.abs(a[1]-r[1])>.01)return false;minX=Math.min(minX,a[0]);maxX=Math.max(maxX,a[0]);minY=Math.min(minY,a[1]);maxY=Math.max(maxY,a[1]);}
         for(z=0;z<4;z++){var b=pts[z].anchor;if(Math.min(Math.abs(b[0]-minX),Math.abs(b[0]-maxX))>.01||Math.min(Math.abs(b[1]-minY),Math.abs(b[1]-maxY))>.01)return false;}return true;}catch(e){return false;}
     }
+    function imageOnlyGroup(it){var found=false;for(var n=0;n<it.pageItems.length;n++){var c=it.pageItems[n];if(c.parent!==it)continue;if(c.typename==='RasterItem'||c.typename==='PlacedItem')found=true;else if(c.typename==='GroupItem'){if(!imageOnlyGroup(c))return false;found=true;}else if(c.typename==='PathItem'&&c.clipping){}else if(c.typename==='CompoundPathItem'&&c.pathItems.length&&c.pathItems[0].clipping){}else return false;}return found;}
+    function backgroundShape(it){try{
+        if(it.typename==='RasterItem'||it.typename==='PlacedItem')return true;
+        if(it.typename==='GroupItem')return it.clipped&&imageOnlyGroup(it);
+        if(it.typename!=='PathItem'||!it.closed||!it.filled||it.stroked||it.clipping||it.pathPoints.length!==4)return false;
+        var gb=it.geometricBounds;
+        for(var n=0;n<4;n++){var pt=it.pathPoints[n],a=pt.anchor,l=pt.leftDirection,r=pt.rightDirection;
+            if(Math.abs(a[0]-l[0])+Math.abs(a[1]-l[1])+Math.abs(a[0]-r[0])+Math.abs(a[1]-r[1])>.01)return false;
+            if(Math.min(Math.abs(a[0]-gb[0]),Math.abs(a[0]-gb[2]))>.01||Math.min(Math.abs(a[1]-gb[1]),Math.abs(a[1]-gb[3]))>.01)return false;
+        }return true;
+    }catch(e){return false;}}
     function contains(a,b){return b.x>=a.x-.5&&b.y>=a.y-.5&&b.x+b.w<=a.x+a.w+.5&&b.y+b.h<=a.y+a.h+.5;}
     function rootItem(it){while(it.parent&&it.parent.typename==='GroupItem')it=it.parent;return it;}
     function has(list,it){for(var n=0;n<list.length;n++)if(list[n]===it)return true;return false;}
@@ -30,6 +41,8 @@
             if(!/^(PathItem|CompoundPathItem|GroupItem|TextFrame|PlacedItem|RasterItem|SymbolItem|MeshItem|PluginItem)$/.test(it.typename))throw Error('Unsupported '+it.typename+'. Use a separate editable copy with supported artwork.');
             if(b.w<=0||b.h<=0){issues.push('Zero-size item skipped.');continue;}
             inspectText(it,issues);if(it.typename==='GroupItem'&&it.clipped)issues.push('Clipping group preserved; review image crop: '+it.name);b.background=it.typename!=='PluginItem'&&it.typename!=='GroupItem'&&it.typename!=='TextFrame'&&b.w>=src.w*.95&&b.h>=src.h*.95;
+            b.sectionBackground=mode.selection.index===0&&edge.value&&it.typename!=='TextFrame'&&!b.background&&b.x<=src.x+src.w*.025&&b.x+b.w>=src.x+src.w*.975&&b.h>=src.h*.08&&(backgroundShape(it)||/^SAR Background/i.test(it.name||''));
+            if(b.sectionBackground)issues.push('Section background detected: '+(it.name||it.typename)+'. Its copied appearance will be cropped, with foreground kept together.');
             if(it.typename==='TextFrame'){b.areaText=simpleParagraph(it);try{b.fontSize=it.textRange.characterAttributes.size;}catch(e){}}
             b.x-=src.x;b.y-=src.y;items.push(b);roots.push(it);
         }
@@ -41,6 +54,7 @@
     win.add('statictext',undefined,'Editable copies on new artboards. Originals are always preserved.');
     var dir=win.add('dropdownlist',undefined,['Automatic direction','A5 -> 3.6 x 4.5 in','3.6 x 4.5 in -> A5']);dir.selection=0;
     var mode=win.add('dropdownlist',undefined,['Smart Reflow','Safe Fit']);mode.selection=0;
+    var edge=win.add('checkbox',undefined,'Edge-to-edge section backgrounds (Smart Reflow)');edge.value=true;
     var scope=win.add('dropdownlist',undefined,['Active artboard','All artboards','Selected artwork on active artboard']);scope.selection=0;
     var marginGroup=win.add('group');marginGroup.add('statictext',undefined,'Safe margin (% of shorter edge)');var margin=marginGroup.add('edittext',undefined,'5');margin.characters=6;
     var gapGroup=win.add('group');gapGroup.add('statictext',undefined,'Artboard gap (mm)');var gap=gapGroup.add('edittext',undefined,'10');gap.characters=6;
@@ -55,7 +69,7 @@
         for(j=0;j<indexes.length;j++){var a=analyze(indexes[j],scope.selection.index===2),target=SARLayout.target(a.src.w,a.src.h,72,dir.selection.index);if(SARLayout.detect(a.src.w,a.src.h,72)<0)a.issues.push('Non-preset source; explicit target used.');a.target=target;a.layout=SARLayout.plan(a.items,{x:0,y:0,w:a.src.w,h:a.src.h},{x:0,y:0,w:target.w,h:target.h},mode.selection.index===0?'smart':'safe',{marginRatio:marginPercent/100});a.dest=SARLayout.rightOf(a.src,existing,target.w,target.h,gapPt);existing.push(a.dest);result.push(a);}
         return result;}finally{app.coordinateSystem=cs;}
     }
-    function display(ps){var lines=[];for(var j=0;j<ps.length;j++){var p=ps[j];lines.push('v0.1.2 | Artboard '+(p.index+1)+' -> '+p.target.name+'; '+p.items.length+' elements; '+p.layout.mode);lines=lines.concat(p.issues,p.layout.warnings);}return lines.join('\n');}
+    function display(ps){var lines=[];for(var j=0;j<ps.length;j++){var p=ps[j];lines.push('v0.1.3 | Artboard '+(p.index+1)+' -> '+p.target.name+'; '+p.items.length+' elements; '+p.layout.mode);lines=lines.concat(p.issues,p.layout.warnings);}return lines.join('\n');}
     check.onClick=function(){try{report.text=display(plans());}catch(e){report.text=e.message;}};
     preview.onClick=function(){action='preview';win.close(1);};apply.onClick=function(){action='apply';win.close(1);};
     if(win.show()!==1||!action)return;
@@ -73,6 +87,7 @@
                 try{var copy=sourceItem.duplicate(container,ElementPlacement.PLACEATBEGINNING);stage='scale';copy.resize(o.scale*100,o.scale*100,true,true,true,true,o.scale*100,Transformation.TOPLEFT);
                     if(o.reflowWidth&&copy.typename==='TextFrame'){stage='widen the paragraph frame for';try{copy.textPath.width=o.reflowWidth;}catch(e){throw Error('Illustrator could not widen paragraph '+(copy.name||'text frame')+'. Retry in Safe Fit to keep the existing frame geometry.');}}
                     stage='position';var cb=bounds(copy);copy.translate(d.x+o.x-cb.x,-(d.y+o.y-cb.y));
+                    if(o.clip){stage='clip the section background for';var wrapper=container.groupItems.add();wrapper.name='SAR Background - '+(copy.name||sourceItem.typename);wrapper.move(copy,ElementPlacement.PLACEBEFORE);copy.move(wrapper,ElementPlacement.PLACEATEND);var c=o.clip,mask=wrapper.pathItems.rectangle(-(d.y+c.y),d.x+c.x,c.w,c.h);mask.filled=false;mask.stroked=false;mask.clipping=true;wrapper.clipped=true;}
                 }catch(e){var advice=sourceItem.typename==='PluginItem'?' The plugin-managed object rejected a native operation. Check the originating plugin; do not expand or rasterize the original to bypass this.':'';throw Error('Could not '+stage+' '+sourceItem.typename+' '+(sourceItem.name||'(unnamed)')+'. '+(e.message||String(e))+advice);}
             }
         }

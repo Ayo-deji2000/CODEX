@@ -52,3 +52,7 @@ For Smart Reflow quality verification, provide the Illustrator/macOS version, so
 For each test record: host version, macOS version, source dimensions/resolution/profile, selected scope, mode, target dimensions, warning text, element count/order, text content/editability, image aspect ratio, margin/collision/crop assessment, original comparison, and outcome (Pass/Fail/Needs manual review).
 
 For exact original preservation, save the source first and compare source item coordinates/bounds, text strings, layer visibility/locks and dimensions before/after. Do not use output appearance alone as evidence of source preservation.
+
+## v0.1.3 section-background checks (NOT RUN in Adobe)
+
+In Illustrator 2026, test a three-section poster in both directions with 0% and 5% foreground margins. Confirm detected background viewports reach both sides and meet without gaps; heading, outlined frame and four cards keep their relative geometry. Check an image-only clip group, a named live-plugin background, source and copied layer masks, no unintended wrapper stacking changes, and rollback if a native crop-wrapper operation fails. Compare with the checkbox disabled and Safe Fit. Parent-layer appearance preservation remains a known limitation.

@@ -29,3 +29,7 @@ Illustrator analyzes all requested sources before creating anything. It snapshot
 Photoshop analyzes inside a modal scope, duplicates the source, registers the duplicate for automatic closure on failure, optionally extracts the selected copied artboard, expands the ordinary canvas before transformations, scales/translates copied layers, and resizes to final target pixels. On success auto-close registration is removed. On an error it closes the copy without saving; automatic modal cleanup covers cancelled-command cases. Preview tracking uses document IDs and checks whether the document still exists.
 
 No transaction promises restoration after a host crash. The safety boundary is that destructive operations target tracked copies only.
+
+## Section viewports
+
+Illustrator supplies optional `sectionBackground` metadata for conservative background candidates in Smart Reflow. The shared ES3 planner excludes these candidates from foreground components, combines foreground bands assigned to the same vertical source section, and returns `clip` rectangles alongside proportional-cover geometry. The Illustrator adapter adds editable wrapper clipping groups at the duplicated object's existing stack position. `clip` is not emitted by Photoshop analysis; its adapter behavior is unchanged. Source objects are never moved into wrappers. All wrapper operations participate in existing output-layer/artboard rollback.

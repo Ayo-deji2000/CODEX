@@ -44,3 +44,15 @@ Without a pending preview, **Apply Conversion** creates a new duplicate and keep
 Check target dimensions, readable font sizes, paragraph overset, image crops, layer effects, group integrity, safe margins, stacking and unexpected collisions. Intentional source overlaps are preserved rather than flagged as new collisions. Collision detection uses rectangles, not exact painted outlines. Background bleed is expected and reported.
 
 Reverse conversion creates a further new version. Existing versions remain available; automatic reversal does not restore the exact original positions.
+
+## Edge-to-edge Illustrator sections (0.1.3)
+
+Smart Reflow enables **Edge-to-edge section backgrounds** by default. Foreground margins still default to 5%; they no longer inset detected section backgrounds. The checkbox has no effect in Safe Fit. Photoshop's background detection is unchanged.
+
+Automatic section candidates span the source width (within 2.5% at either edge), cover at least 8% of its height, and are raster/placed images, image-only clipping groups, or simple filled rectangular paths without a stroke. Curved outline frames, text and opaque plugin artwork are not automatically treated as section backgrounds. Review candidates in Analyze Design: a wide photograph can contain important material that should not be cropped.
+
+For an actual background that uses a live plugin or a more complex native group, rename that background root object or group to start with `SAR Background` in a separate working copy. Do not name the pricing frame, cards, a text object or a complete poster this way. Geometry checks still apply. This is an explicit permission to crop the copied object's appearance. Keep whole related section foreground groups intact when their objects cross background section boundaries.
+
+Detected backgrounds receive proportional cover inside new clipping groups; their underlying artwork remains editable. Section foreground objects that fit within the same source background's vertical bounds retain their relative positions, including headings, outlined frames and cards. Background viewports meet between foreground sections and reach the target sides. Existing source stacking is retained by inserting each wrapper at the copied object's position. Overlapping background candidates stop before creating artwork; disable the checkbox or use Safe Fit if the source intentionally has overlapping background decorations.
+
+For the reported pricing-poster case: start from the original artboard, choose Smart Reflow, leave the edge-to-edge checkbox enabled, and Analyze. Confirm that the top and pricing-section background objects are reported. If they are not, identify and name only those background roots as above. Preview and review the frame/title appearance. Original layer-level masks and compositing are still not reproduced by consolidation into an output layer, so this feature does not certify a fix for that separate appearance issue.
